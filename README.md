@@ -84,7 +84,7 @@ section > main {
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
-.is-animating .transition-slide.is-next-container {
+.transition-slide.is-next-container {
   transform: translateX(100%);
   opacity: 0;
 }

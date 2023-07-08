@@ -1,11 +1,10 @@
+import { nextTick } from 'swup';
 import Plugin from '@swup/plugin';
 
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
 	requires = { swup: '>=4' };
-
-	preloadPromises = new Map();
 
 	defaults = {
 		containers: ['#swup']
@@ -75,30 +74,30 @@ export default class SwupParallelPlugin extends Plugin {
 			return abort();
 		}
 
-		const parallelContainers = this.parseContainers(page);
-
 		// Replace parallel containers ourselves
+
+		const parallelContainers = this.parseContainers(page);
 		parallelContainers.forEach(({ previous, next, wrapper }) => {
+			this.previousContainers.push(previous);
+			this.nextContainers.push(next);
+
 			previous.removeAttribute('id');
 			previous.classList.add('is-previous-container');
 			next.classList.add('is-next-container');
 			next.scrollTop = previous.scrollTop;
 			this.insertBefore(next, previous, wrapper);
-			this.previousContainers.push(previous);
-			this.nextContainers.push(next);
+
+			nextTick().then(() => next.classList.remove('is-next-container'));
 		});
 
-		// Let swup handler replace series containers
+		// Let swup handler replace "normal" containers
+
 		await originalHandler(context, { ...args, containers: containersInSeries });
 	}
 
 	cleanupContainers = () => {
-		this.previousContainers.forEach((container) => {
-			container.remove();
-		});
-		this.nextContainers.forEach((container) => {
-			container.classList.remove('is-next-container');
-		});
+		this.previousContainers.forEach((c) => c.remove());
+		this.nextContainers.forEach((c) => c.classList.remove('is-next-container'));
 		this.previousContainers = [];
 	}
 
