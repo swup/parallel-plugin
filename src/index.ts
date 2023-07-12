@@ -37,35 +37,35 @@ export default class SwupParallelPlugin extends Plugin {
 	}
 
 	mount() {
-		this.swup.hooks.before('transitionStart', this.prepareTransition);
-		this.swup.hooks.on('transitionStart', this.validateTransition);
-		this.swup.hooks.replace('awaitAnimation', this.skipOutAnimation);
-		this.swup.hooks.replace('replaceContent', this.insertContainers);
-		this.swup.hooks.on('replaceContent', this.resetContainers, { priority: -100 });
-		this.swup.hooks.on('transitionEnd', this.cleanupContainers);
+		this.swup.hooks.before('visit:start', this.prepareTransition);
+		this.swup.hooks.on('visit:start', this.validateTransition);
+		this.swup.hooks.replace('animation:await', this.skipOutAnimation);
+		this.swup.hooks.replace('content:replace', this.insertContainers);
+		this.swup.hooks.on('content:replace', this.resetContainers, { priority: -100 });
+		this.swup.hooks.on('visit:end', this.cleanupContainers);
 	}
 
 	unmount() {
-		this.swup.hooks.off('transitionStart', this.prepareTransition);
-		this.swup.hooks.off('transitionStart', this.validateTransition);
-		this.swup.hooks.off('awaitAnimation', this.skipOutAnimation);
-		this.swup.hooks.off('replaceContent', this.insertContainers);
-		this.swup.hooks.off('replaceContent', this.resetContainers);
-		this.swup.hooks.off('transitionEnd', this.cleanupContainers);
+		this.swup.hooks.off('visit:start', this.prepareTransition);
+		this.swup.hooks.off('visit:start', this.validateTransition);
+		this.swup.hooks.off('animation:await', this.skipOutAnimation);
+		this.swup.hooks.off('content:replace', this.insertContainers);
+		this.swup.hooks.off('content:replace', this.resetContainers);
+		this.swup.hooks.off('visit:end', this.cleanupContainers);
 	}
 
-	prepareTransition: Handler<'transitionStart'> = (context) => {
+	prepareTransition: Handler<'visit:start'> = (context) => {
 		context.animation.parallel = true;
 	};
 
-	validateTransition: Handler<'transitionStart'> = (context) => {
+	validateTransition: Handler<'visit:start'> = (context) => {
 		const { animate, parallel } = context.animation;
 		if (animate && parallel) {
 			context.animation.wait = true;
 		}
 	};
 
-	skipOutAnimation: Handler<'awaitAnimation'> = (context, args, defaultHandler) => {
+	skipOutAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
 		if (animate && parallel && direction === 'out') {
@@ -74,7 +74,7 @@ export default class SwupParallelPlugin extends Plugin {
 		return defaultHandler?.(context, args);
 	};
 
-	insertContainers: Handler<'replaceContent'> = async (context, args, defaultHandler) => {
+	insertContainers: Handler<'content:replace'> = async (context, args, defaultHandler) => {
 		const abort = async () => await defaultHandler?.(context, args);
 		const { animate, parallel } = context.animation;
 		const { containers } = context;
@@ -122,7 +122,7 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 	};
 
-	resetContainers: Handler<'replaceContent'> = (context) => {
+	resetContainers: Handler<'content:replace'> = (context) => {
 		context.containers = this.originalContainers;
 	};
 
