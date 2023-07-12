@@ -17,6 +17,8 @@ declare module 'swup' {
 	}
 }
 
+const isTruthy = <T>(x?: T | undefined | null | false): x is T => Boolean(x);
+
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
@@ -133,9 +135,6 @@ export default class SwupParallelPlugin extends Plugin {
 
 	parseContainers({ html }: { html: string }): ContainerSet[] {
 		const newDocument = new DOMParser().parseFromString(html, 'text/html');
-		const isTruthy = <T>(value?: T | undefined | null | false): value is T => {
-			return !!value;
-		};
 		return this.options.containers
 			.map((selector) => {
 				const previous = document.querySelector(selector);
