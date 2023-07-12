@@ -11,6 +11,12 @@ type ParsedContainers = {
 	next: Element;
 };
 
+declare module 'swup' {
+	export interface AnimationContext {
+		parallel?: boolean;
+	}
+}
+
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
@@ -34,7 +40,7 @@ export default class SwupParallelPlugin extends Plugin {
 		this.swup.hooks.before('transitionStart', this.prepareTransition);
 		this.swup.hooks.on('transitionStart', this.validateTransition);
 		this.swup.hooks.replace('awaitAnimation', this.skipOutAnimation);
-		this.swup.hooks.before('replaceContent', this.insertContainers);
+		this.swup.hooks.replace('replaceContent', this.insertContainers);
 		this.swup.hooks.on('replaceContent', this.resetContainers, { priority: -100 });
 		this.swup.hooks.on('transitionEnd', this.cleanupContainers);
 	}
@@ -59,39 +65,39 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 	};
 
-	skipOutAnimation: Handler<'awaitAnimation'> = (context, args, originalHandler: any) => {
+	skipOutAnimation: Handler<'awaitAnimation'> = (context, args, defaultHandler) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
 		if (animate && parallel && direction === 'out') {
 			return Promise.resolve();
 		}
-		return originalHandler(context, args);
+		return defaultHandler?.(context, args);
 	};
 
-	insertContainers: Handler<'replaceContent'> = async (context, args) => {
+	insertContainers: Handler<'replaceContent'> = async (context, args, defaultHandler) => {
+		const abort = () => defaultHandler?.(context, args);
 		const { animate, parallel } = context.animation;
 		const { containers } = context;
 		const { page } = args;
 
 		if (!animate || !parallel) {
-			return;
+			return abort();
 		}
 
 		const defaultContainers = [...containers];
-		this.originalContainers = containers;
 		const containersInParallel = this.options.containers;
 		const containersInSeries = defaultContainers.filter(
-			(c) => !containersInParallel.includes(c)
+			(selector) => !containersInParallel.includes(selector)
 		);
-		const hasContainers = containersInParallel.every((c) => defaultContainers.includes(c));
+		const hasContainers = containersInParallel.every((selector) =>
+			defaultContainers.includes(selector)
+		);
 		if (!hasContainers) {
 			console.warn(
 				'[parallel-plugin] Parallel containers must be included in default containers'
 			);
-			return;
+			return abort();
 		}
-
-		context.containers = containersInSeries;
 
 		// Replace parallel containers ourselves
 
@@ -108,11 +114,17 @@ export default class SwupParallelPlugin extends Plugin {
 
 			nextTick().then(() => next.classList.remove('is-next-container'));
 		});
+
+		if (containersInSeries) {
+			context.containers = containersInSeries;
+			defaultHandler?.(context, { ...args });
+			context.containers = defaultContainers;
+		}
 	};
 
-	resetContainers: Handler<"replaceContent"> = (context) => {
+	resetContainers: Handler<'replaceContent'> = (context) => {
 		context.containers = this.originalContainers;
-	}
+	};
 
 	cleanupContainers = () => {
 		this.previousContainers.forEach((c) => c.remove());
