@@ -108,6 +108,7 @@ export default class SwupParallelPlugin extends Plugin {
 			this.previousContainers.push(previous);
 			this.nextContainers.push(next);
 
+			previous.setAttribute('aria-hidden', 'true');
 			previous.classList.add('is-previous-container');
 			next.classList.add('is-next-container');
 
