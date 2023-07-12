@@ -138,10 +138,8 @@ export default class SwupParallelPlugin extends Plugin {
 		return this.options.containers
 			.map((selector) => {
 				const previous = document.querySelector(selector);
-				if (!previous) return false;
 				const next = newDocument.querySelector(selector);
-				if (!next) return false;
-				return { previous, next };
+				return previous && next ? { previous, next } : false;
 			})
 			.filter(isTruthy);
 	}
