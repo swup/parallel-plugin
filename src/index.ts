@@ -102,7 +102,6 @@ export default class SwupParallelPlugin extends Plugin {
 
 			previous.classList.add('is-previous-container');
 			next.scrollTop = previous.scrollTop;
-
 			next.classList.add('is-next-container');
 
 			previous.before(next);
