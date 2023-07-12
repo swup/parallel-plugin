@@ -6,7 +6,7 @@ type PluginOptions = {
 	containers: SwupOptions['containers'];
 };
 
-type ParsedContainers = {
+type ContainerSet = {
 	previous: Element;
 	next: Element;
 };
@@ -131,7 +131,7 @@ export default class SwupParallelPlugin extends Plugin {
 		this.previousContainers = [];
 	};
 
-	parseContainers({ html }: { html: string }): ParsedContainers[] {
+	parseContainers({ html }: { html: string }): ContainerSet[] {
 		const newDocument = new DOMParser().parseFromString(html, 'text/html');
 		const isTruthy = <T>(value?: T | undefined | null | false): value is T => {
 			return !!value;
