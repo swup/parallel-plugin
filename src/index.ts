@@ -75,7 +75,7 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 
 	insertContainers: Handler<'replaceContent'> = async (context, args, defaultHandler) => {
-		const abort = () => defaultHandler?.(context, args);
+		const abort = async () => await defaultHandler?.(context, args);
 		const { animate, parallel } = context.animation;
 		const { containers } = context;
 		const { page } = args;
@@ -117,7 +117,7 @@ export default class SwupParallelPlugin extends Plugin {
 
 		if (containersInSeries) {
 			context.containers = containersInSeries;
-			defaultHandler?.(context, { ...args });
+			defaultHandler?.(context, args);
 			context.containers = defaultContainers;
 		}
 	};
