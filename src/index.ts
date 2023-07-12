@@ -135,11 +135,11 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 
 	parseContainers({ html }: { html: string }): ContainerSet[] {
-		const newDocument = new DOMParser().parseFromString(html, 'text/html');
+		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
 		return this.options.containers
 			.map((selector) => {
 				const previous = document.querySelector(selector);
-				const next = newDocument.querySelector(selector);
+				const next = incomingDocument.querySelector(selector);
 				return previous && next ? { previous, next } : false;
 			})
 			.filter(isTruthy);
