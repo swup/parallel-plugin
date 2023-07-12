@@ -1,19 +1,31 @@
 import { nextTick } from 'swup';
+import type { Options as SwupOptions, Handler } from 'swup';
 import Plugin from '@swup/plugin';
+
+type PluginOptions = {
+	containers: SwupOptions['containers'];
+};
+
+type ParsedContainers = {
+	previous: Element;
+	next: Element;
+	wrapper: ParentNode;
+};
 
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
 	requires = { swup: '>=4' };
 
-	defaults = {
+	defaults: PluginOptions = {
 		containers: ['#swup']
 	};
+	options: PluginOptions;
 
-	previousContainers = [];
-	nextContainers = [];
+	previousContainers: Element[] = [];
+	nextContainers: Element[] = [];
 
-	constructor(options = {}) {
+	constructor(options: PluginOptions) {
 		super();
 		this.options = { ...this.defaults, ...options };
 	}
@@ -34,32 +46,32 @@ export default class SwupParallelPlugin extends Plugin {
 		this.swup.hooks.off('transitionEnd', this.cleanupContainers);
 	}
 
-	prepareTransition(context) {
-		context.transition.parallel = true;
-	}
+	prepareTransition: Handler<'transitionStart'> = (context) => {
+		context.animation.parallel = true;
+	};
 
-	validateTransition = (context) => {
-		const { animate, parallel } = context.transition;
+	validateTransition: Handler<'transitionStart'> = (context) => {
+		const { animate, parallel } = context.animation;
 		if (animate && parallel) {
-			context.transition.wait = true;
+			context.animation.wait = true;
 		}
-	}
+	};
 
-	skipOutAnimation = (context, args, originalHandler) => {
-		const { animate, parallel } = context.transition;
+	skipOutAnimation: Handler<'awaitAnimation'> = (context, args, originalHandler: any) => {
+		const { animate, parallel } = context.animation;
 		const { direction } = args;
 		if (animate && parallel && direction === 'out') {
 			return Promise.resolve();
-		} else {
-			return originalHandler(context, args);
 		}
-	}
+		return originalHandler(context, args);
+	};
 
-	insertContainers = async (context, args, originalHandler) => {
+	insertContainers: Handler<'replaceContent'> = async (context, args, originalHandler: any) => {
 		const abort = () => originalHandler(context, args);
 
-		const { animate, parallel } = context.transition;
-		const { page, containers } = args;
+		const { animate, parallel } = context.animation;
+		const { containers } = context;
+		const { page } = args;
 
 		if (!animate || !parallel) {
 			return abort();
@@ -67,7 +79,9 @@ export default class SwupParallelPlugin extends Plugin {
 
 		const defaultContainers = containers;
 		const containersInParallel = this.options.containers;
-		const containersInSeries = defaultContainers.filter((c) => !containersInParallel.includes(c));
+		const containersInSeries = defaultContainers.filter(
+			(c) => !containersInParallel.includes(c)
+		);
 		const hasContainers = containersInParallel.every((c) => defaultContainers.includes(c));
 		if (!hasContainers) {
 			console.warn('Parallel containers must be included in default containers');
@@ -93,25 +107,33 @@ export default class SwupParallelPlugin extends Plugin {
 		// Let swup handler replace "normal" containers
 
 		await originalHandler(context, { ...args, containers: containersInSeries });
-	}
+	};
 
 	cleanupContainers = () => {
 		this.previousContainers.forEach((c) => c.remove());
 		this.nextContainers.forEach((c) => c.classList.remove('is-next-container'));
 		this.previousContainers = [];
-	}
+	};
 
-	parseContainers({ html }) {
+	parseContainers({ html }: { html: string }): ParsedContainers[] {
 		const newDocument = new DOMParser().parseFromString(html, 'text/html');
-		return this.options.containers.map((selector) => {
-			const previous = document.querySelector(selector);
-			const next = newDocument.querySelector(selector);
-			const wrapper = previous.parentNode;
-			return { previous, next, wrapper };
-		});
+		const isTruthy = <T>(value?: T | undefined | null | false): value is T => {
+			return !!value;
+		};
+		return this.options.containers
+			.map((selector) => {
+				const previous = document.querySelector(selector);
+				if (!previous) return false;
+				const next = newDocument.querySelector(selector);
+				if (!next) return false;
+				const wrapper = previous.parentNode;
+				if (!wrapper) return false;
+				return { previous, next, wrapper };
+			})
+			.filter(isTruthy);
 	}
 
-	insertBefore(newNode, existingNode, newParent) {
+	insertBefore(newNode: Element, existingNode: Element, newParent: ParentNode): void {
 		if (newParent.contains(existingNode)) {
 			newParent.insertBefore(newNode, existingNode);
 		} else {
