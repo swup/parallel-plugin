@@ -17,7 +17,7 @@ declare module 'swup' {
 	}
 }
 
-const isTruthy = <T>(x?: T | undefined | null | false): x is T => Boolean(x);
+const isTruthy = <T>(x?: T | undefined | null | false): x is T => !!x;
 
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
