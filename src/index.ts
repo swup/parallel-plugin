@@ -33,7 +33,7 @@ export default class SwupParallelPlugin extends Plugin {
 	previousContainers: Element[] = [];
 	nextContainers: Element[] = [];
 
-	constructor(options: PluginOptions) {
+	constructor(options?: Partial<PluginOptions>) {
 		super();
 		this.options = { ...this.defaults, ...options };
 	}
