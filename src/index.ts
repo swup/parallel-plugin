@@ -144,12 +144,4 @@ export default class SwupParallelPlugin extends Plugin {
 			})
 			.filter(isTruthy);
 	}
-
-	insertBefore(newNode: Element, existingNode: Element, newParent: ParentNode): void {
-		if (newParent.contains(existingNode)) {
-			newParent.insertBefore(newNode, existingNode);
-		} else {
-			newParent.appendChild(newNode);
-		}
-	}
 }
