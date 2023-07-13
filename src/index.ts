@@ -4,6 +4,7 @@ import Plugin from '@swup/plugin';
 
 type PluginOptions = {
 	containers: SwupOptions['containers'];
+	renderPhase: 'in' | 'out';
 };
 
 type ContainerSet = {
@@ -25,7 +26,8 @@ export default class SwupParallelPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: PluginOptions = {
-		containers: ['#swup']
+		containers: ['#swup'],
+		renderPhase: 'out'
 	};
 	options: PluginOptions;
 
@@ -36,12 +38,15 @@ export default class SwupParallelPlugin extends Plugin {
 	constructor(options?: Partial<PluginOptions>) {
 		super();
 		this.options = { ...this.defaults, ...options };
+		if (!['in', 'out'].includes(this.options.renderPhase)) {
+			this.options.renderPhase = 'out';
+		}
 	}
 
 	mount() {
 		this.swup.hooks.before('visit:start', this.prepareTransition);
 		this.swup.hooks.on('visit:start', this.validateTransition);
-		this.swup.hooks.replace('animation:await', this.skipOutAnimation);
+		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.replace('content:replace', this.insertContainers);
 		this.swup.hooks.on('content:replace', this.resetContainers, { priority: -100 });
 		this.swup.hooks.on('visit:end', this.cleanupContainers);
@@ -50,7 +55,7 @@ export default class SwupParallelPlugin extends Plugin {
 	unmount() {
 		this.swup.hooks.off('visit:start', this.prepareTransition);
 		this.swup.hooks.off('visit:start', this.validateTransition);
-		this.swup.hooks.off('animation:await', this.skipOutAnimation);
+		this.swup.hooks.off('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.off('content:replace', this.insertContainers);
 		this.swup.hooks.off('content:replace', this.resetContainers);
 		this.swup.hooks.off('visit:end', this.cleanupContainers);
@@ -67,10 +72,11 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 	};
 
-	skipOutAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
+	maybeSkipAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
-		if (animate && parallel && direction === 'out') {
+		const isRenderPhase = this.options.renderPhase !== direction;
+		if (animate && parallel && !isRenderPhase) {
 			return Promise.resolve();
 		}
 		return defaultHandler?.(context, args);
