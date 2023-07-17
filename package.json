@@ -38,7 +38,10 @@
     "url": "https://github.com/swup/parallel-plugin.git"
   },
   "dependencies": {
-    "@swup/plugin": "npm:@hirasso/swup-plugin@^3.0.0-rc.20"
+    "@swup/plugin": "^3.0.0-rc.22"
+  },
+  "peerDependencies": {
+    "swup": "^4.0.0-rc.21"
   },
   "browserslist": [
     "extends @swup/browserslist-config"
