@@ -31,7 +31,6 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 	options: PluginOptions;
 
-	originalContainers: SwupOptions['containers'] = [];
 	previousContainers: Element[] = [];
 	nextContainers: Element[] = [];
 
@@ -44,28 +43,26 @@ export default class SwupParallelPlugin extends Plugin {
 	}
 
 	mount() {
-		this.swup.hooks.before('visit:start', this.prepareTransition);
-		this.swup.hooks.on('visit:start', this.validateTransition);
+		this.swup.hooks.before('visit:start', this.startVisit);
+		this.swup.hooks.on('visit:start', this.prepareVisit);
 		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.replace('content:replace', this.insertContainers);
-		this.swup.hooks.on('content:replace', this.resetContainers, { priority: -100 });
 		this.swup.hooks.on('visit:end', this.cleanupContainers);
 	}
 
 	unmount() {
-		this.swup.hooks.off('visit:start', this.prepareTransition);
-		this.swup.hooks.off('visit:start', this.validateTransition);
+		this.swup.hooks.off('visit:start', this.startVisit);
+		this.swup.hooks.off('visit:start', this.prepareVisit);
 		this.swup.hooks.off('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.off('content:replace', this.insertContainers);
-		this.swup.hooks.off('content:replace', this.resetContainers);
 		this.swup.hooks.off('visit:end', this.cleanupContainers);
 	}
 
-	prepareTransition: Handler<'visit:start'> = (context) => {
+	startVisit: Handler<'visit:start'> = (context) => {
 		context.animation.parallel = true;
 	};
 
-	validateTransition: Handler<'visit:start'> = (context) => {
+	prepareVisit: Handler<'visit:start'> = (context) => {
 		const { animate, parallel } = context.animation;
 		if (animate && parallel) {
 			context.animation.wait = true;
@@ -123,21 +120,16 @@ export default class SwupParallelPlugin extends Plugin {
 			nextTick().then(() => next.classList.remove('is-next-container'));
 		});
 
-		if (containersInSeries) {
-			context.containers = containersInSeries;
-			defaultHandler?.(context, args);
-			context.containers = defaultContainers;
-		}
-	};
-
-	resetContainers: Handler<'content:replace'> = (context) => {
-		context.containers = this.originalContainers;
+		context.containers = containersInSeries;
+		await defaultHandler?.(context, args);
+		context.containers = defaultContainers;
 	};
 
 	cleanupContainers = () => {
 		this.previousContainers.forEach((c) => c.remove());
-		this.nextContainers.forEach((c) => c.classList.remove('is-next-container'));
 		this.previousContainers = [];
+		this.nextContainers.forEach((c) => c.classList.remove('is-next-container'));
+		this.nextContainers = [];
 	};
 
 	parseContainers({ html }: { html: string }): ContainerSet[] {
