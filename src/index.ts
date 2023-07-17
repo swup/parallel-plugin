@@ -1,5 +1,5 @@
-import { nextTick } from 'swup';
 import type { Options as SwupOptions, Handler } from 'swup';
+import { nextTick } from 'swup';
 import Plugin from '@swup/plugin';
 
 type PluginOptions = {
@@ -35,7 +35,7 @@ export default class SwupParallelPlugin extends Plugin {
 	previousContainers: Element[] = [];
 	nextContainers: Element[] = [];
 
-	constructor(options?: Partial<PluginOptions>) {
+	constructor(options: Partial<PluginOptions> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
 		if (!['in', 'out'].includes(this.options.renderPhase)) {
