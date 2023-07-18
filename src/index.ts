@@ -49,18 +49,20 @@ export default class SwupParallelPlugin extends Plugin {
 			this.options.animationPhase = 'out';
 		}
 
-	mount() {
-		this.swup.hooks.before('visit:start', this.startVisit);
-		this.swup.hooks.on('visit:start', this.prepareVisit, { priority: 1 });
+		// On visit: check for containers and mark as parallel visit
+		this.swup.hooks.on('visit:start', this.startVisit, { priority: 1 });
+		// When awaiting animation: skip if not in animation phase
 		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
+		// Before content replace: insert new containers
 		this.swup.hooks.before('content:replace', this.insertContainers);
+		// After content replace: reset containers in context object
 		this.swup.hooks.on('content:replace', this.resetContainers);
+		// After visit: remove old containers
 		this.swup.hooks.on('visit:end', this.cleanupContainers);
 	}
 
 	unmount() {
 		this.swup.hooks.off('visit:start', this.startVisit);
-		this.swup.hooks.off('visit:start', this.prepareVisit);
 		this.swup.hooks.off('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.off('content:replace', this.insertContainers);
 		this.swup.hooks.off('content:replace', this.resetContainers);
@@ -68,13 +70,19 @@ export default class SwupParallelPlugin extends Plugin {
 	}
 
 	startVisit: Handler<'visit:start'> = (context) => {
-		context.animation.parallel = true;
-	};
-
-	prepareVisit: Handler<'visit:start'> = (context) => {
 		const { animate, parallel } = context.animation;
-		if (animate && parallel) {
+		const { containers } = this.options;
+		if (!animate || parallel === false) {
+			console.log('Not animated or parallel disabled');
+			return;
+		}
+
+		// Only mark as parallel visit if containers found
+		const hasContainers = containers.some((selector) => document.querySelector(selector));
+		console.log('Checking for parallel containers', hasContainers, containers);
+		if (hasContainers) {
 			context.animation.wait = true;
+			context.animation.parallel = true;
 		}
 	};
 
