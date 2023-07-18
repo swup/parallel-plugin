@@ -4,13 +4,13 @@ import Plugin from '@swup/plugin';
 
 declare module 'swup' {
 	export interface AnimationContext {
+		/** Parallel visit: run in and out animation at the same time */
 		parallel?: boolean;
 	}
 }
 
 type PluginOptions = {
 	containers: SwupOptions['containers'];
-	animationPhase: 'in' | 'out';
 };
 
 type ContainerSet = {
@@ -24,8 +24,7 @@ export default class SwupParallelPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: PluginOptions = {
-		containers: [],
-		animationPhase: 'out'
+		containers: []
 	};
 	options: PluginOptions;
 
@@ -42,11 +41,6 @@ export default class SwupParallelPlugin extends Plugin {
 		// No containers passed? Use all content containers
 		if (!this.options.containers.length) {
 			this.options.containers = this.swup.options.containers;
-		}
-
-		// No animation phase passed? Default to 'out' phase
-		if (!['in', 'out'].includes(this.options.animationPhase)) {
-			this.options.animationPhase = 'out';
 		}
 
 		// On visit: check for containers and mark as parallel visit
@@ -89,9 +83,8 @@ export default class SwupParallelPlugin extends Plugin {
 	maybeSkipAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
-		const isAnimationPhase = this.options.animationPhase === direction;
-		console.log('isAnimationPhase?', isAnimationPhase, this.options.animationPhase, direction);
-		if (animate && parallel && isAnimationPhase) {
+		const isAnimationPhase = 'in' === direction;
+		if (animate && parallel && !isAnimationPhase) {
 			return Promise.resolve();
 		}
 		return defaultHandler?.(context, args);
