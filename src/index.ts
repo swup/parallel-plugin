@@ -4,7 +4,7 @@ import Plugin from '@swup/plugin';
 
 type PluginOptions = {
 	containers: SwupOptions['containers'];
-	renderPhase: 'in' | 'out';
+	animationPhase: 'in' | 'out';
 };
 
 type ContainerSet = {
@@ -27,7 +27,7 @@ export default class SwupParallelPlugin extends Plugin {
 
 	defaults: PluginOptions = {
 		containers: ['#swup'],
-		renderPhase: 'out'
+		animationPhase: 'in'
 	};
 	options: PluginOptions;
 
@@ -37,8 +37,8 @@ export default class SwupParallelPlugin extends Plugin {
 	constructor(options: Partial<PluginOptions> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
-		if (!['in', 'out'].includes(this.options.renderPhase)) {
-			this.options.renderPhase = 'out';
+		if (!['in', 'out'].includes(this.options.animationPhase)) {
+			this.options.animationPhase = 'in';
 		}
 	}
 
@@ -72,8 +72,9 @@ export default class SwupParallelPlugin extends Plugin {
 	maybeSkipAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
-		const isRenderPhase = this.options.renderPhase !== direction;
-		if (animate && parallel && !isRenderPhase) {
+		const isAnimationPhase = this.options.animationPhase === direction;
+		console.log('isAnimationPhase?', isAnimationPhase, this.options.animationPhase, direction);
+		if (animate && parallel && isAnimationPhase) {
 			return Promise.resolve();
 		}
 		return defaultHandler?.(context, args);
