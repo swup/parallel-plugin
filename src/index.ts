@@ -25,7 +25,7 @@ export default class SwupParallelPlugin extends Plugin {
 
 	defaults: PluginOptions = {
 		containers: ['#swup'],
-		animationPhase: 'in'
+		animationPhase: 'out'
 	};
 	options: PluginOptions;
 
@@ -37,13 +37,13 @@ export default class SwupParallelPlugin extends Plugin {
 		super();
 		this.options = { ...this.defaults, ...options };
 		if (!['in', 'out'].includes(this.options.animationPhase)) {
-			this.options.animationPhase = 'in';
+			this.options.animationPhase = 'out';
 		}
 	}
 
 	mount() {
 		this.swup.hooks.before('visit:start', this.startVisit);
-		this.swup.hooks.on('visit:start', this.prepareVisit);
+		this.swup.hooks.on('visit:start', this.prepareVisit, { priority: 1 });
 		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.before('content:replace', this.insertContainers);
 		this.swup.hooks.on('content:replace', this.resetContainers);
@@ -120,6 +120,10 @@ export default class SwupParallelPlugin extends Plugin {
 
 			nextTick().then(() => next.classList.remove('is-next-container'));
 		});
+
+		console.log('containersInParallel', containersInParallel);
+		console.log('containersInSeries', containersInSeries);
+		console.log('parallelContainers', parallelContainers);
 
 		this.originalContainers = defaultContainers;
 		context.containers = containersInSeries;
