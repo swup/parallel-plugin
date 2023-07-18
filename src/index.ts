@@ -29,6 +29,7 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 	options: PluginOptions;
 
+	originalContainers: SwupOptions['containers'] = [];
 	previousContainers: Element[] = [];
 	nextContainers: Element[] = [];
 
@@ -44,7 +45,8 @@ export default class SwupParallelPlugin extends Plugin {
 		this.swup.hooks.before('visit:start', this.startVisit);
 		this.swup.hooks.on('visit:start', this.prepareVisit);
 		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
-		this.swup.hooks.replace('content:replace', this.insertContainers);
+		this.swup.hooks.before('content:replace', this.insertContainers);
+		this.swup.hooks.on('content:replace', this.resetContainers);
 		this.swup.hooks.on('visit:end', this.cleanupContainers);
 	}
 
@@ -53,6 +55,7 @@ export default class SwupParallelPlugin extends Plugin {
 		this.swup.hooks.off('visit:start', this.prepareVisit);
 		this.swup.hooks.off('animation:await', this.maybeSkipAnimation);
 		this.swup.hooks.off('content:replace', this.insertContainers);
+		this.swup.hooks.off('content:replace', this.resetContainers);
 		this.swup.hooks.off('visit:end', this.cleanupContainers);
 	}
 
@@ -78,14 +81,13 @@ export default class SwupParallelPlugin extends Plugin {
 		return defaultHandler?.(context, args);
 	};
 
-	insertContainers: Handler<'content:replace'> = async (context, args, defaultHandler) => {
-		const abort = async () => await defaultHandler?.(context, args);
+	insertContainers: Handler<'content:replace'> = (context, args) => {
 		const { animate, parallel } = context.animation;
 		const { containers } = context;
 		const { page } = args;
 
 		if (!animate || !parallel) {
-			return abort();
+			return;
 		}
 
 		const defaultContainers = [...containers];
@@ -100,7 +102,7 @@ export default class SwupParallelPlugin extends Plugin {
 			console.warn(
 				'[parallel-plugin] Parallel containers must be included in default containers'
 			);
-			return abort();
+			return;
 		}
 
 		// Replace parallel containers ourselves
@@ -119,9 +121,17 @@ export default class SwupParallelPlugin extends Plugin {
 			nextTick().then(() => next.classList.remove('is-next-container'));
 		});
 
+		this.originalContainers = defaultContainers;
 		context.containers = containersInSeries;
-		await defaultHandler?.(context, args);
-		context.containers = defaultContainers;
+	};
+
+	resetContainers: Handler<'content:replace'> = (context) => {
+		const { animate, parallel } = context.animation;
+		if (!animate || !parallel) {
+			return;
+		}
+
+		context.containers = this.originalContainers;
 	};
 
 	cleanupContainers = () => {
