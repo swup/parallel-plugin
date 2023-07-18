@@ -14,8 +14,8 @@ type PluginOptions = {
 };
 
 type ContainerSet = {
-	previous: Element;
-	next: Element;
+	previous: HTMLElement;
+	next: HTMLElement;
 };
 
 export default class SwupParallelPlugin extends Plugin {
@@ -122,12 +122,12 @@ export default class SwupParallelPlugin extends Plugin {
 			this.nextContainers.push(next);
 
 			previous.setAttribute('aria-hidden', 'true');
-			previous.classList.add('is-previous-container');
-			next.classList.add('is-next-container');
-
 			previous.before(next);
 
-			nextTick().then(() => next.classList.remove('is-next-container'));
+			next.classList.add('is-next-container');
+			this.forceReflow(next);
+			next.classList.remove('is-next-container');
+			previous.classList.add('is-previous-container');
 		});
 
 		console.log('containersInParallel', containersInParallel);
@@ -158,9 +158,14 @@ export default class SwupParallelPlugin extends Plugin {
 		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
 		return this.options.containers
 			.reduce((containers, selector: string) => {
-				const previous = document.querySelector(selector);
-				const next = incomingDocument.querySelector(selector);
+				const previous = document.querySelector<HTMLElement>(selector);
+				const next = incomingDocument.querySelector<HTMLElement>(selector);
 				return previous && next ? [...containers, { previous, next }] : containers;
 			}, [] as ContainerSet[]);
+	}
+
+	forceReflow(element?: HTMLElement) {
+		element = element || document.body;
+		return element?.offsetHeight;
 	}
 }
