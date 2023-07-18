@@ -24,7 +24,7 @@ export default class SwupParallelPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: PluginOptions = {
-		containers: ['#swup'],
+		containers: [],
 		animationPhase: 'out'
 	};
 	options: PluginOptions;
@@ -36,10 +36,18 @@ export default class SwupParallelPlugin extends Plugin {
 	constructor(options: Partial<PluginOptions> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
+	}
+
+	mount() {
+		// No containers passed? Use all content containers
+		if (!this.options.containers.length) {
+			this.options.containers = this.swup.options.containers;
+		}
+
+		// No animation phase passed? Default to 'out' phase
 		if (!['in', 'out'].includes(this.options.animationPhase)) {
 			this.options.animationPhase = 'out';
 		}
-	}
 
 	mount() {
 		this.swup.hooks.before('visit:start', this.startVisit);
