@@ -2,6 +2,12 @@ import type { Options as SwupOptions, Handler } from 'swup';
 import { nextTick } from 'swup';
 import Plugin from '@swup/plugin';
 
+declare module 'swup' {
+	export interface AnimationContext {
+		parallel?: boolean;
+	}
+}
+
 type PluginOptions = {
 	containers: SwupOptions['containers'];
 	animationPhase: 'in' | 'out';
@@ -11,14 +17,6 @@ type ContainerSet = {
 	previous: Element;
 	next: Element;
 };
-
-declare module 'swup' {
-	export interface AnimationContext {
-		parallel?: boolean;
-	}
-}
-
-const isTruthy = <T>(x?: T | undefined | null | false): x is T => !!x;
 
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
@@ -136,11 +134,10 @@ export default class SwupParallelPlugin extends Plugin {
 	parseContainers({ html }: { html: string }): ContainerSet[] {
 		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
 		return this.options.containers
-			.map((selector) => {
+			.reduce((containers, selector: string) => {
 				const previous = document.querySelector(selector);
 				const next = incomingDocument.querySelector(selector);
-				return previous && next ? { previous, next } : false;
-			})
-			.filter(isTruthy);
+				return previous && next ? [...containers, { previous, next }] : containers;
+			}, [] as ContainerSet[]);
 	}
 }
