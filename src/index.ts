@@ -1,5 +1,5 @@
 import type { Options as SwupOptions, Handler } from 'swup';
-import { nextTick } from 'swup';
+import { forceReflow } from 'swup';
 import Plugin from '@swup/plugin';
 
 declare module 'swup' {
@@ -44,9 +44,10 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 
 		// On visit: check for containers and mark as parallel visit
+		// Run after user hooks to allow disabling parallel animations beforehand
 		this.swup.hooks.on('visit:start', this.startVisit, { priority: 1 });
-		// When awaiting animation: skip if not in animation phase
-		this.swup.hooks.replace('animation:await', this.maybeSkipAnimation);
+		// Before awaiting animation: skip if not in animation phase
+		this.swup.hooks.before('animation:await', this.maybeSkipAnimation);
 		// Before content replace: insert new containers
 		this.swup.hooks.before('content:replace', this.insertContainers);
 		// After content replace: reset containers in context object
@@ -80,14 +81,13 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 	};
 
-	maybeSkipAnimation: Handler<'animation:await'> = (context, args, defaultHandler) => {
+	maybeSkipAnimation: Handler<'animation:await'> = (context, args) => {
 		const { animate, parallel } = context.animation;
 		const { direction } = args;
 		const isAnimationPhase = 'in' === direction;
 		if (animate && parallel && !isAnimationPhase) {
-			return Promise.resolve();
+			context.animation.skip = true;
 		}
-		return defaultHandler?.(context, args);
 	};
 
 	insertContainers: Handler<'content:replace'> = (context, args) => {
@@ -125,7 +125,7 @@ export default class SwupParallelPlugin extends Plugin {
 			previous.before(next);
 
 			next.classList.add('is-next-container');
-			this.forceReflow(next);
+			forceReflow(next);
 			next.classList.remove('is-next-container');
 			previous.classList.add('is-previous-container');
 		});
@@ -162,10 +162,5 @@ export default class SwupParallelPlugin extends Plugin {
 				const next = incomingDocument.querySelector<HTMLElement>(selector);
 				return previous && next ? [...containers, { previous, next }] : containers;
 			}, [] as ContainerSet[]);
-	}
-
-	forceReflow(element?: HTMLElement) {
-		element = element || document.body;
-		return element?.offsetHeight;
 	}
 }
