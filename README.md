@@ -2,8 +2,8 @@
 
 A [swup](https://swup.js.org) plugin for running the in and out animations in parallel.
 
-- Keep the previous container during the page transition
-- Animate both the previous and current containers at the same time
+- Keeps the previous page visible while the next page is entering
+- Implement simultaneous animations like crossfades, slideshows, or overlays
 
 ## Installation
 
@@ -149,15 +149,15 @@ animations in parallel.
 
 ### Opting out of parallel animations
 
-The plugin will set a flag on the global context, indicating the current visit
-as a parallel animation: `context.animation.parallel`. You can unset this flag
+The plugin will set a flag on the visit object, indicating the current visit
+as a parallel animation: `visit.animation.parallel`. You can unset this flag
 to fall back to a normal animation with leave and enter in series.
 
 ```js
 // Disable parallel animations for this visit
-swup.hooks.on('visit:start', (context) => {
+swup.hooks.on('visit:start', (visit) => {
   if (someCondition) {
-    context.animation.parallel = false;
+    visit.animation.parallel = false;
   }
 });
 ```
