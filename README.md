@@ -2,8 +2,8 @@
 
 A [swup](https://swup.js.org) plugin for running the in and out animations in parallel.
 
-- Keep the previous container during the page transition
-- Animate both the previous and current containers at the same time
+- Keeps the previous page visible while the next page is entering
+- Implement simultaneous animations like crossfades, slideshows, or overlays
 
 ## Installation
 
