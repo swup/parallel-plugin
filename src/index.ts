@@ -62,9 +62,12 @@ export default class SwupParallelPlugin extends Plugin {
 		if (!animate || parallel === false) {
 			return;
 		}
-
 		// Only mark as parallel visit if containers found
-		const hasContainers = containers.some((selector) => document.querySelector(selector));
+		const hasContainers = containers.some((selector) => {
+			const el = document.querySelector(selector)
+			if (!el) return false;
+			return visit.containers.some(s => el.matches(s));
+		});
 		if (hasContainers) {
 			visit.animation.wait = true;
 			visit.animation.parallel = true;
