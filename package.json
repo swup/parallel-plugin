@@ -32,6 +32,13 @@
     "email": "daun@daun.ltd",
     "url": "https://philippdaun.net"
   },
+  "contributors": [
+    {
+      "name": "Rasso Hilber",
+      "email": "mail@rassohilber.com",
+      "url": "https://rassohilber.com"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
