@@ -1,9 +1,17 @@
 # Swup Parallel Plugin
 
-A [swup](https://swup.js.org) plugin for running the in and out animations in parallel.
+A [swup](https://swup.js.org) plugin for animating the previous and next page in parallel.
 
+- Combines swup's leave/enter animations into a single animation
 - Keeps the previous page visible while the next page is entering
-- Implement simultaneous animations like crossfades, slideshows, or overlays
+- Allows synchronous animations like overlays, crossfades, or slideshows
+
+## Demos
+
+To see parallel animations in action, check out the official demos:
+[slideshow animation](https://swup-demo-slideshow.swupjs.repl.co),
+[reveal animation](https://swup-demo-reveal.swupjs.repl.co/). Feel free to explore more examples
+on the [Swup Demos](https://swup.js.org//getting-started/demos/) page of the docs.
 
 ## Installation
 
@@ -33,10 +41,35 @@ const swup = new Swup({
 });
 ```
 
+## Scenario
+
+When transitioning pages, swup will hide the previous page before replacing the content and showing
+the next page. This is fine in most cases, and great for performance and accessibility. However,
+some layouts **require the previous page to be visible for the duration of the page transition**: think
+crossfades, overlays, slideshows, 3D effects, etc. For these to be convincing, the old and new
+containers must be **animated at the same time**.
+
+## Lifecycle
+
+**Swup default animations**
+
+- Animate out: hide the previous content
+- Replace the content entirely
+- Animate in: show the next content
+- Previous and next content are never in the DOM at the same time
+
+**Parallel Plugin animations**
+
+- Skip the out-phase of the animation
+- Add the next content to the DOM
+- Animate in and out: show the next content while hiding the previous content
+- Previous and next content are DOM siblings during the animation
+
 ## Markup
 
 In this example, we want to slide in the new `main` element while sliding out the previous `main`
-element. The markup for parallel animations isn't any different from normal animations.
+element. The markup for parallel animations isn't any different from normal animations: a simple
+section with a content area.
 
 ```html
 <section>
@@ -55,8 +88,8 @@ During the animation, both containers will be in the DOM at the same time.
 Swup has inserted the next container, will wait for any animations to finish, and
 then remove the previous container.
 
-Note: the next container is always inserted **before** the previous one, which
-is marked as hidden from screen readers.
+Note: for accessibility reasons, the next container is always inserted **before** the previous one
+and the previous one is marked as hidden from screen readers by setting `aria-hidden="true"`.
 
 ```html
 <section>
@@ -145,9 +178,15 @@ both animations in the `in` handler.
 
 ### containers
 
-The containers that are visible at the same time. Usually only the main content container. Must be
-a container normally replaced by swup. If not specified, defaults to running all
-animations in parallel.
+By default, all content containers are animated in parallel. If you only want to perform parallel
+animations for specific containers and replace other containers normally, specify the parallel
+containers here.
+
+```js
+new SwupParallelPlugin({
+  containers: ['main']
+})
+```
 
 ## API
 
