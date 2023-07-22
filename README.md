@@ -11,7 +11,7 @@ A [swup](https://swup.js.org) plugin for animating the previous and next page in
 To see parallel animations in action, check out the official demos:
 [slideshow animation](https://swup-demo-slideshow.swupjs.repl.co),
 [reveal animation](https://swup-demo-reveal.swupjs.repl.co/). Feel free to explore more examples
-on the [Swup Demos](https://swup.js.org//getting-started/demos/) page of the docs.
+on the [Swup Demos](https://swup.js.org/getting-started/demos/) page of the docs.
 
 ## Installation
 
