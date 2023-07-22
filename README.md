@@ -131,11 +131,15 @@ the animation, parallel animations can be controlled using the classes `is-previ
 
 ## Timing
 
-Technically, the plugin will skip the out-animation, add the next container, wait for animations to
-finish, then remove the previous container. All animations now happen in the in-phase of the
+Technically, the plugin will **skip the out-animation**, add the next container, wait for animations to
+finish, then remove the previous container. **All animations now happen in the in-phase** of the
 lifecycle, after the `content:replace` hook that normally marks the middle of the animation
 process. Any containers that are not animated or not animated in parallel (e.g. a static header)
 will be replaced at the start of the parallel animation.
+
+This also applies when using the [JS plugin](https://swup.js.org/plugins/js-plugin/): the
+out-animation is skipped entirely and only the in-animation is executed. You'll need to perform
+both animations in the `in` handler.
 
 ## Options
 
