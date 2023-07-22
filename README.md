@@ -188,6 +188,24 @@ new SwupParallelPlugin({
 })
 ```
 
+### animations
+
+By default, all animations are performed in parallel. If you only need certain specific animations
+to perform in parallel, specify them here. Custom animations can be set with a
+`data-swup-animation` attribute on link elements.
+
+For example, to only run animations in parallel if the custom animation is set to `slide`:
+
+```html
+<a href="/" data-swup-animation="slide">Go</a>
+```
+
+```js
+new SwupParallelPlugin({
+  animations: ['slide']
+});
+```
+
 ## API
 
 ### Opting out of parallel animations

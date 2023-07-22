@@ -11,6 +11,7 @@ declare module 'swup' {
 
 type PluginOptions = {
 	containers: string[];
+	animations: string[];
 };
 
 type ContainerSet = {
@@ -24,7 +25,8 @@ export default class SwupParallelPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: PluginOptions = {
-		containers: []
+		containers: [],
+		animations: []
 	};
 	options: PluginOptions;
 
@@ -59,25 +61,21 @@ export default class SwupParallelPlugin extends Plugin {
 	startVisit: Handler<'visit:start'> = (visit) => {
 		this.originalContainers = null;
 
-		if (!visit.animation.animate || visit.animation.parallel === false) {
-			return;
-		}
-
-		// Only mark as parallel visit if containers found
-		if (this.visitHasParallelContainers(visit)) {
+		// Only mark as parallel visit if containers found and animation matches
+		if (this.visitHasPotentialParallelAnimation(visit)) {
 			visit.animation.wait = true;
 			visit.animation.parallel = true;
 		}
 	};
 
 	skipOutAnimation: Handler<'animation:out:await'> = (visit, args) => {
-		if (visit.animation.animate && visit.animation.parallel) {
+		if (this.isParallelVisit(visit)) {
 			args.skip = true;
 		}
 	};
 
 	insertContainers: Handler<'content:replace'> = (visit, { page }) => {
-		if (!visit.animation.animate || !visit.animation.parallel) {
+		if (!this.isParallelVisit(visit)) {
 			return;
 		}
 
@@ -129,6 +127,35 @@ export default class SwupParallelPlugin extends Plugin {
 			const next = incomingDocument.querySelector<HTMLElement>(selector);
 			return previous && next ? [...containers, { previous, next }] : containers;
 		}, [] as ContainerSet[]);
+	}
+
+	isParallelVisit(visit: Visit) {
+		return visit.animation.animate && visit.animation.parallel;
+	}
+
+	markVisitAsParallelAnimation(visit: Visit) {
+		visit.animation.wait = true;
+		visit.animation.parallel = true;
+	}
+
+	visitHasPotentialParallelAnimation(visit: Visit) {
+		// Checking for visit.animation.parallel !== false here allows explicitly
+		// disabling parallel animations in user hooks before this plugin executes
+		return (
+			visit.animation.animate &&
+			visit.animation.parallel !== false &&
+			this.visitHasParallelCustomAnimation(visit) &&
+			this.visitHasParallelContainers(visit)
+		);
+	}
+
+	visitHasParallelCustomAnimation(visit: Visit) {
+		// Use weak comparison `visit.animation.name == name` instead of `.includes()` to allow
+		// for empty values to match visits without custom animation name
+		return (
+			!this.options.animations.length ||
+			this.options.animations.some((name) => visit.animation.name == name)
+		);
 	}
 
 	visitHasParallelContainers(visit: Visit) {
