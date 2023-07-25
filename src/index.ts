@@ -72,21 +72,14 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 
 	insertContainers: Handler<'content:replace'> = (visit, { page }) => {
-			return;
-		}
-
-		const parallelContainers = this.options.containers;
-		const hasParallelContainers = parallelContainers.every((s) => visit.containers.includes(s));
-		if (!hasParallelContainers) {
-			console.warn(
-				'[parallel-plugin] Parallel containers not found in list of replaced containers'
-			);
 		if (!this.isParallelVisit(visit)) {
 			return;
 		}
 
 		// Replace parallel containers ourselves
-		this.parseContainers(page).forEach(({ previous, next }) => {
+		const containerSets = this.getContainersForVisit(visit, page);
+		const parallelContainers = containerSets.map(({ selector }) => selector);
+		containerSets.forEach(({ previous, next }) => {
 			this.previousContainers.push(previous);
 			this.nextContainers.push(next);
 
@@ -117,12 +110,20 @@ export default class SwupParallelPlugin extends Plugin {
 		this.nextContainers = [];
 	};
 
-	parseContainers({ html }: { html: string }): ContainerSet[] {
+	getContainersForVisit(visit: Visit, { html }: { html: string }): ContainerSet[] {
+		const { containers: parallelContainers } = this.options;
+		const containersInVisit = parallelContainers.filter((s) => visit.containers.includes(s));
+		if (!containersInVisit.length) {
+			console.warn('No parallel containers found in list of replaced containers');
+			return [];
+		}
+
 		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
-		return this.options.containers.reduce((containers, selector: string) => {
+
+		return containersInVisit.reduce((containers, selector: string) => {
 			const previous = document.querySelector<HTMLElement>(selector);
 			const next = incomingDocument.querySelector<HTMLElement>(selector);
-			return previous && next ? [...containers, { previous, next }] : containers;
+			return previous && next ? [...containers, { selector, previous, next }] : containers;
 		}, [] as ContainerSet[]);
 	}
 
