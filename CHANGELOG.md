@@ -2,6 +2,14 @@
 
 <!-- ## [Unreleased] -->
 
+## [0.1.1] - 2023-07-26
+
+- Bump dependencies
+
+## [0.1.0] - 2023-07-25
+
+- Refactor
+
 ## [0.0.4] - 2023-07-22
 
 - Refactor
@@ -18,8 +26,10 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/parallel-plugin/compare/0.0.4...HEAD
+[Unreleased]: https://github.com/swup/parallel-plugin/compare/0.1.1...HEAD
 
+[0.1.1]: https://github.com/swup/parallel-plugin/releases/tag/0.1.1
+[0.1.0]: https://github.com/swup/parallel-plugin/releases/tag/0.1.0
 [0.0.4]: https://github.com/swup/parallel-plugin/releases/tag/0.0.4
 [0.0.3]: https://github.com/swup/parallel-plugin/releases/tag/0.0.3
 [0.0.2]: https://github.com/swup/parallel-plugin/releases/tag/0.0.2

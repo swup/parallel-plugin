@@ -14,6 +14,7 @@ type PluginOptions = {
 };
 
 type ContainerSet = {
+	selector: string;
 	previous: HTMLElement;
 	next: HTMLElement;
 };
@@ -23,9 +24,7 @@ export default class SwupParallelPlugin extends Plugin {
 
 	requires = { swup: '>=4' };
 
-	defaults: PluginOptions = {
-		containers: []
-	};
+	defaults: PluginOptions = { containers: [] };
 	options: PluginOptions;
 
 	originalContainers: string[] | null = null;
@@ -59,39 +58,28 @@ export default class SwupParallelPlugin extends Plugin {
 	startVisit: Handler<'visit:start'> = (visit) => {
 		this.originalContainers = null;
 
-		if (!visit.animation.animate || visit.animation.parallel === false) {
-			return;
-		}
-
-		// Only mark as parallel visit if containers found
-		if (this.visitHasParallelContainers(visit)) {
+		// Only mark as parallel visit if containers found and animation matches
+		if (this.visitHasPotentialParallelAnimation(visit)) {
 			visit.animation.wait = true;
 			visit.animation.parallel = true;
 		}
 	};
 
 	skipOutAnimation: Handler<'animation:out:await'> = (visit, args) => {
-		if (visit.animation.animate && visit.animation.parallel) {
+		if (this.isParallelVisit(visit)) {
 			args.skip = true;
 		}
 	};
 
 	insertContainers: Handler<'content:replace'> = (visit, { page }) => {
-		if (!visit.animation.animate || !visit.animation.parallel) {
-			return;
-		}
-
-		const parallelContainers = this.options.containers;
-		const hasParallelContainers = parallelContainers.every((s) => visit.containers.includes(s));
-		if (!hasParallelContainers) {
-			console.warn(
-				'[parallel-plugin] Parallel containers not found in list of replaced containers'
-			);
+		if (!this.isParallelVisit(visit)) {
 			return;
 		}
 
 		// Replace parallel containers ourselves
-		this.parseContainers(page).forEach(({ previous, next }) => {
+		const containerSets = this.getContainersForVisit(visit, page);
+		const parallelContainers = containerSets.map(({ selector }) => selector);
+		containerSets.forEach(({ previous, next }) => {
 			this.previousContainers.push(previous);
 			this.nextContainers.push(next);
 
@@ -122,13 +110,40 @@ export default class SwupParallelPlugin extends Plugin {
 		this.nextContainers = [];
 	};
 
-	parseContainers({ html }: { html: string }): ContainerSet[] {
+	getContainersForVisit(visit: Visit, { html }: { html: string }): ContainerSet[] {
+		const { containers: parallelContainers } = this.options;
+		const containersInVisit = parallelContainers.filter((s) => visit.containers.includes(s));
+		if (!containersInVisit.length) {
+			console.warn('No parallel containers found in list of replaced containers');
+			return [];
+		}
+
 		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
-		return this.options.containers.reduce((containers, selector: string) => {
+
+		return containersInVisit.reduce((containers, selector: string) => {
 			const previous = document.querySelector<HTMLElement>(selector);
 			const next = incomingDocument.querySelector<HTMLElement>(selector);
-			return previous && next ? [...containers, { previous, next }] : containers;
+			return previous && next ? [...containers, { selector, previous, next }] : containers;
 		}, [] as ContainerSet[]);
+	}
+
+	isParallelVisit(visit: Visit) {
+		return visit.animation.animate && visit.animation.parallel;
+	}
+
+	markVisitAsParallelAnimation(visit: Visit) {
+		visit.animation.wait = true;
+		visit.animation.parallel = true;
+	}
+
+	visitHasPotentialParallelAnimation(visit: Visit) {
+		// Checking for visit.animation.parallel !== false here allows explicitly
+		// disabling parallel animations in user hooks before this plugin executes
+		return (
+			visit.animation.animate &&
+			visit.animation.parallel !== false &&
+			this.visitHasParallelContainers(visit)
+		);
 	}
 
 	visitHasParallelContainers(visit: Visit) {
