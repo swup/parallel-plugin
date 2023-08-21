@@ -182,6 +182,49 @@ This also applies when using the [JS plugin](https://swup.js.org/plugins/js-plug
 out-animation is skipped entirely and only the in-animation is executed. You'll need to perform
 both animations in the `in` handler.
 
+## Keeping the previous container around
+
+The previous container is removed from the DOM after the animation finishes. If you need to keep a
+copy of it around even after the animation, you can set the [keep](#keep) option and adjust your
+styling.
+
+### State
+
+Previous containers that will be kept are marked with a class name of `.is-kept-container`. Those
+about to be removed are marked with `.is-removing-container`.
+
+```html
+<section>
+  <main id="swup" class="transition-slide is-next-container"></main>
+  <main id="swup" class="transition-slide is-previous-container is-kept-container" aria-hidden="true"></main>
+  <main id="swup" class="transition-slide is-previous-container is-kept-container is-removing-container" aria-hidden="true"></main>
+</section>
+```
+
+### Styling
+
+Use the classes `is-removing-container` to style the transition of a container to be removed.
+
+```css
+.is-changing .transition-slide {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.transition-slide.is-next-container {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.transition-slide.is-kept-container {
+  transform: translateX(-100%);
+}
+
+.transition-slide.is-removing-container {
+  transform: translateX(-200%);
+  opacity: 0;
+}
+```
+
 ## Options
 
 ### containers
@@ -195,6 +238,11 @@ new SwupParallelPlugin({
   containers: ['main']
 })
 ```
+
+### keep
+
+The number of previous containers to keep around **after** the animation finishes. Useful for layouts
+like slideshows, stacks, etc. Default: `0`.
 
 ## API
 
