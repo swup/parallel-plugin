@@ -258,6 +258,15 @@ like slideshows, stacks, etc. Default: `0`.
 }
 ```
 
+Pass an object indexed by selector to keep around the previous version of certain containers only:
+
+```js
+{
+  containers: ['main', 'footer'],
+  keep: { 'main': 1 }
+}
+```
+
 ## API
 
 ### Opting out of parallel animations

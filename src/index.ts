@@ -11,7 +11,7 @@ declare module 'swup' {
 
 type PluginOptions = {
 	containers: string[];
-	keep: number;
+	keep: number | { [ container: string ]: number };
 };
 
 type ContainerSet = {
@@ -41,7 +41,6 @@ export default class SwupParallelPlugin extends Plugin {
 	constructor(options: Partial<PluginOptions> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
-		this.options.keep = Math.max(0, this.options.keep);
 	}
 
 	mount() {
@@ -136,11 +135,16 @@ export default class SwupParallelPlugin extends Plugin {
 		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
 
 		return containersInVisit.reduce((containers, selector: string) => {
+			let { keep: keepCount } = this.options;
+			keepCount = typeof keepCount === 'object' ? keepCount[selector] : keepCount;
+			keepCount = Math.max(0, Number(keepCount));
+
 			const next = incomingDocument.querySelector<HTMLElement>(selector);
 			const previousAll = Array.from(document.querySelectorAll<HTMLElement>(selector));
+
 			const previous = previousAll[0];
-			const keep = previousAll.slice(0, this.options.keep);
-			const remove = previousAll.slice(this.options.keep);
+			const keep = previousAll.slice(0, keepCount);
+			const remove = previousAll.slice(keepCount);
 			const all = [...new Set([next!, previous, ...keep, ...remove])];
 			if (next && previous) {
 				return [...containers, { selector, next, previous, keep, remove, all }];
