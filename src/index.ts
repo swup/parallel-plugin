@@ -84,8 +84,6 @@ export default class SwupParallelPlugin extends Plugin {
 			return;
 		}
 
-		document.documentElement.style.setProperty('--swup-parallel-containers', `${this.options.keep}`);
-
 		// Get info about parallel containers
 		this.parallelContainers = this.getParallelContainerForVisit(visit, page);
 
