@@ -193,7 +193,7 @@ your styling.
 > this plugin marks containers as `aria-hidden="true"`, the duplicate content can still be clicked
 > and focussed. Marking previous containers as
 > [inert](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert) is a possible
-> solution but not applicable to all use case. Turning a `main` container into a simple `div` would
+> solution but not applicable to all use cases. Turning a `main` container into a simple `div` would
 > be helpful as well, however it's impossible to do without a complete re-render of the element.
 
 ```js
