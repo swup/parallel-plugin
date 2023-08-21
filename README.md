@@ -188,7 +188,8 @@ The previous container is removed from the DOM after the animation finishes. If 
 or more copies of it around after the animation, you can set the [keep](#keep) option and adjust
 your styling.
 
-> **Note**: Keep in mind the accessibility concerns of having duplicate content on the page. While
+> **Warning**
+> Keep in mind the accessibility concerns of having duplicate content on the page. While
 > this plugin marks containers as `aria-hidden="true"`, the duplicate content can still be clicked
 > and focussed. Marking previous containers as
 > [inert](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert) is a possible
