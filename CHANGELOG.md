@@ -2,6 +2,10 @@
 
 <!-- ## [Unreleased] -->
 
+## [0.2.0] - 2023-08-24
+
+- Allow keeping the previous container indefinitely
+
 ## [0.1.1] - 2023-07-26
 
 - Bump dependencies
@@ -26,8 +30,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/parallel-plugin/compare/0.1.1...HEAD
+[Unreleased]: https://github.com/swup/parallel-plugin/compare/0.2.0...HEAD
 
+[0.2.0]: https://github.com/swup/parallel-plugin/releases/tag/0.2.0
 [0.1.1]: https://github.com/swup/parallel-plugin/releases/tag/0.1.1
 [0.1.0]: https://github.com/swup/parallel-plugin/releases/tag/0.1.0
 [0.0.4]: https://github.com/swup/parallel-plugin/releases/tag/0.0.4
