@@ -182,6 +182,57 @@ This also applies when using the [JS plugin](https://swup.js.org/plugins/js-plug
 out-animation is skipped entirely and only the in-animation is executed. You'll need to perform
 both animations in the `in` handler.
 
+## Keeping the previous container
+
+The previous container is removed from the DOM after the animation finishes. If you need to keep one
+or more copies of it around after the animation, you can set the [keep](#keep) option and adjust
+your styling.
+
+> **Warning**
+> Keep in mind the accessibility concerns of having duplicate content on the page. While
+> this plugin marks containers as `aria-hidden="true"`, the duplicate content can still be clicked
+> and focussed. Marking previous containers as
+> [inert](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/inert) is a possible
+> solution but not applicable to all use cases. Turning a `main` container into a simple `div` would
+> be helpful as well, however it's impossible to do without a complete re-render of the element.
+
+```js
+new SwupParallelPlugin({ keep: 1 })
+```
+
+Previous containers that will be kept are marked with a class name of `.is-kept-container`. Those
+about to be removed are marked with `.is-removing-container`.
+
+```html
+<section>
+  <main id="swup" class="transition-slide is-next-container"></main>
+  <main id="swup" class="transition-slide is-previous-container is-kept-container" aria-hidden="true"></main>
+  <main id="swup" class="transition-slide is-previous-container is-kept-container is-removing-container" aria-hidden="true"></main>
+</section>
+```
+
+Use the classes `is-removing-container` to style the transition of a container to be removed.
+
+```css
+.is-changing .transition-slide {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.transition-slide.is-next-container {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.transition-slide.is-kept-container {
+  transform: translateX(-100%);
+}
+
+.transition-slide.is-removing-container {
+  transform: translateX(-200%);
+  opacity: 0;
+}
+```
+
 ## Options
 
 ### containers
@@ -191,9 +242,29 @@ animations for specific containers and replace other containers normally, specif
 containers here.
 
 ```js
-new SwupParallelPlugin({
+{
   containers: ['main']
-})
+}
+```
+
+### keep
+
+The number of previous containers to keep around **after** the animation finishes. Useful for layouts
+like slideshows, stacks, etc. Default: `0`.
+
+```js
+{
+  keep: 1
+}
+```
+
+Pass an object indexed by selector to keep around the previous version of certain containers only:
+
+```js
+{
+  containers: ['main', 'footer'],
+  keep: { 'main': 1 }
+}
 ```
 
 ## API
