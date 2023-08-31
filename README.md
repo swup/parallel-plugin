@@ -156,9 +156,9 @@ already out of view or transparent. It is added directly after the element is ad
 begin the animation.
 
 The class `is-next-container` defines the **initial state** of the next container about to enter the
-page, e.g. still out of view or transparent. It is removed directly after the element is added to
-the DOM to begin the animation. As it's only applied for a split second, it won't be visible when
-inspecting the element in the browser dev tools.
+page, e.g. still out of view or transparent. It is added before the element is inserted into the
+DOM and removed directly after insertion to begin the animation. As it's only applied for a split
+second, it won't be visible when inspecting the element in the browser dev tools.
 
 ```css
 /* Parallel animation timing */
