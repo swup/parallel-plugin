@@ -148,8 +148,17 @@ section > main {
 
 ### Defining the animations
 
-Instead of using swup's default classes for timing
-the animation, parallel animations can be controlled using the classes `is-previous-container` and `is-next-container` on the containers themselves.
+Instead of using swup's default classes for timing the animation, parallel animations can be
+controlled using two custom classes applied by this plugin on the containers themselves:
+
+The class `is-previous-container` defines the **final state** of the previous container, e.g.
+already out of view or transparent. It is added directly after the element is added to the DOM to
+begin the animation.
+
+The class `is-next-container` defines the **initial state** of the next container about to enter the
+page, e.g. still out of view or transparent. It is added before the element is inserted into the
+DOM and removed directly after insertion to begin the animation. As it's only applied for a split
+second, it won't be visible when inspecting the element in the browser dev tools.
 
 ```css
 /* Parallel animation timing */
@@ -157,15 +166,15 @@ the animation, parallel animations can be controlled using the classes `is-previ
   transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
 }
 
-/* Style of next container when done */
-.transition-slide.is-next-container {
-  transform: translateX(100%);
+/* Style of previous container after leaving */
+.transition-slide.is-previous-container {
+  transform: translateX(-100%);
   opacity: 0;
 }
 
-/* Style of previous container when done */
-.transition-slide.is-previous-container {
-  transform: translateX(-100%);
+/* Style of next container before entering */
+.transition-slide.is-next-container {
+  transform: translateX(100%);
   opacity: 0;
 }
 ```

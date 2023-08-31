@@ -10,16 +10,24 @@ declare module 'swup' {
 }
 
 type PluginOptions = {
+	/** Containers to animate in parallel */
 	containers: string[];
+	/** Number of previous containers to keep around after the animation */
 	keep: number | { [ container: string ]: number };
 };
 
 type ContainerSet = {
+	/** Selector to match this container */
 	selector: string;
+	/** Incoming container element */
 	next: HTMLElement;
+	/** Outgoing container element */
 	previous: HTMLElement;
+	/** Container elements to keep around after the animation */
 	keep: HTMLElement[];
+	/** Container elements to remove after the animation */
 	remove: HTMLElement[];
+	/** All container elements associated with this selector */
 	all: HTMLElement[];
 };
 
@@ -52,17 +60,22 @@ export default class SwupParallelPlugin extends Plugin {
 		// On visit: check for containers and mark as parallel visit
 		// Run after user hooks to allow disabling parallel animations beforehand
 		this.on('visit:start', this.startVisit, { priority: 1 });
+
 		// Before awaiting out animation: skip
 		this.before('animation:out:await', this.skipOutAnimation, { priority: 1 });
+
 		// Before content replace: insert new containers
 		this.before('content:replace', this.insertContainers, { priority: 1 });
+
 		// After content replace: reset containers
 		this.on('content:replace', this.resetContainers);
+
 		// After visit: remove old containers
 		this.on('visit:end', this.cleanupContainers);
 	}
 
-	startVisit: Handler<'visit:start'> = (visit) => {
+	/** On visit start: mark visit as parallel if conditions match */
+	protected startVisit: Handler<'visit:start'> = (visit) => {
 		this.originalContainers = null;
 
 		// Only mark as parallel visit if containers found and animation matches
@@ -72,19 +85,21 @@ export default class SwupParallelPlugin extends Plugin {
 		}
 	};
 
-	skipOutAnimation: Handler<'animation:out:await'> = (visit, args) => {
+	/** On animation out: skip animation if parallel visit */
+	protected skipOutAnimation: Handler<'animation:out:await'> = (visit, args) => {
 		if (this.isParallelVisit(visit)) {
 			args.skip = true;
 		}
 	};
 
-	insertContainers: Handler<'content:replace'> = (visit, { page }) => {
+	/** Before content replacement: insert new containers */
+	protected insertContainers: Handler<'content:replace'> = (visit, { page }) => {
 		if (!this.isParallelVisit(visit)) {
 			return;
 		}
 
 		// Get info about parallel containers
-		this.parallelContainers = this.getParallelContainerForVisit(visit, page);
+		this.parallelContainers = this.getParallelContainersForVisit(visit, page);
 
 		// Replace parallel containers ourselves
 		for (const { all, next, previous, keep, remove } of this.parallelContainers) {
@@ -109,13 +124,15 @@ export default class SwupParallelPlugin extends Plugin {
 		visit.containers = visit.containers.filter((s) => !parallelSelectors.includes(s));
 	};
 
-	resetContainers: Handler<'content:replace'> = (visit) => {
+	/** After content replacement: restore original container selectors */
+	protected resetContainers: Handler<'content:replace'> = (visit) => {
 		if (this.originalContainers) {
 			visit.containers = this.originalContainers;
 		}
 	};
 
-	cleanupContainers = () => {
+	/** After each visit: remove previous containers */
+	protected cleanupContainers = () => {
 		for (const { remove, next } of this.parallelContainers) {
 			remove.forEach((el) => el.remove());
 			next.classList.remove('is-next-container');
@@ -123,7 +140,8 @@ export default class SwupParallelPlugin extends Plugin {
 		this.parallelContainers = [];
 	};
 
-	getParallelContainerForVisit(visit: Visit, { html }: PageData): ContainerSet[] {
+	/** Get all container sets for this visit from the current page and the incoming html */
+	protected getParallelContainersForVisit(visit: Visit, { html }: PageData): ContainerSet[] {
 		const { containers: parallelContainers } = this.options;
 
 		const containersInVisit = parallelContainers.filter((s) => visit.containers.includes(s));
@@ -155,16 +173,19 @@ export default class SwupParallelPlugin extends Plugin {
 		}, [] as ContainerSet[]);
 	}
 
-	isParallelVisit(visit: Visit) {
+	/** Check if a visit is marked as parallel animation */
+	protected isParallelVisit(visit: Visit) {
 		return visit.animation.parallel;
 	}
 
-	markVisitAsParallelAnimation(visit: Visit) {
+	/** Mark a visit as parallel animation */
+	protected markVisitAsParallelAnimation(visit: Visit) {
 		visit.animation.wait = true;
 		visit.animation.parallel = true;
 	}
 
-	visitHasPotentialParallelAnimation(visit: Visit) {
+	/** Check if a visit is potentially parallel */
+	protected visitHasPotentialParallelAnimation(visit: Visit) {
 		// Checking for visit.animation.parallel !== false here allows explicitly
 		// disabling parallel animations in user hooks before this plugin executes
 		return (
@@ -173,7 +194,8 @@ export default class SwupParallelPlugin extends Plugin {
 		);
 	}
 
-	visitHasParallelContainers(visit: Visit) {
+	/** Check if any of a visit's containers are animated in parallel */
+	protected visitHasParallelContainers(visit: Visit) {
 		return this.options.containers.some((selector) => {
 			const container = document.querySelector(selector);
 			return container?.matches(visit.containers.join(','));
