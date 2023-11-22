@@ -2,6 +2,10 @@
 
 <!-- ## [Unreleased] -->
 
+## [0.3.0] - 2023-11-22
+
+- Add hooks for inserting and removing containers
+
 ## [0.2.0] - 2023-08-24
 
 - Allow keeping the previous container indefinitely
