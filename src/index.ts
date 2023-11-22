@@ -17,7 +17,7 @@ type PluginOptions = {
 	/** Containers to animate in parallel */
 	containers: string[];
 	/** Number of previous containers to keep around after the animation */
-	keep: number | { [ container: string ]: number };
+	keep: number | { [container: string]: number };
 };
 
 type ContainerSet = {
@@ -202,10 +202,7 @@ export default class SwupParallelPlugin extends Plugin {
 	protected visitHasPotentialParallelAnimation(visit: Visit) {
 		// Checking for visit.animation.parallel !== false here allows explicitly
 		// disabling parallel animations in user hooks before this plugin executes
-		return (
-			visit.animation.parallel !== false &&
-			this.visitHasParallelContainers(visit)
-		);
+		return visit.animation.parallel !== false && this.visitHasParallelContainers(visit);
 	}
 
 	/** Check if any of a visit's containers are animated in parallel */
