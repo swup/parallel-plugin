@@ -2,7 +2,7 @@
   "name": "@swup/parallel-plugin",
   "amdName": "SwupParallelPlugin",
   "description": "A swup plugin for animating the previous and next page in parallel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "source": "src/index.ts",
   "main": "./dist/index.cjs",
