@@ -292,3 +292,48 @@ swup.hooks.on('visit:start', (visit) => {
   }
 });
 ```
+
+## Hooks
+
+The plugin adds two new hooks to swup. Both hooks receive a `ContainerSet` instance as their
+only argument:
+
+```ts
+type ContainerSet = {
+  /** Selector to match this container */
+  selector: string;
+  /** Incoming container element */
+  next: HTMLElement;
+  /** Outgoing container element */
+  previous: HTMLElement;
+  /** Container elements to keep around after the animation */
+  keep: HTMLElement[];
+  /** Container elements to remove after the animation */
+  remove: HTMLElement[];
+};
+```
+
+### `content:insert`
+
+Triggered when the new content containers are inserted. Hook before this to manipulate the
+elements before they are inserted into the DOM.
+
+```js
+swup.hooks.before('content:insert', (visit, { containers }) => {
+  for (const { next } of containers) {
+    console.log('About to insert container', next);
+  }
+});
+```
+
+### `content:remove`
+
+Triggered when the previous containers are removed, after the animation has finished.
+
+```js
+swup.hooks.before('content:remove', (visit, { containers }) => {
+  for (const { remove } of containers) {
+    console.log('About to remove containers', remove);
+  }
+});
+```

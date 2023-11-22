@@ -3,6 +3,10 @@ import { forceReflow } from 'swup';
 import Plugin from '@swup/plugin';
 
 declare module 'swup' {
+	export interface HookDefinitions {
+		'content:insert': { containers: ContainerSet[] };
+		'content:remove': { containers: ContainerSet[] };
+	}
 	export interface VisitAnimation {
 		/** Parallel visit: run in and out animation at the same time */
 		parallel?: boolean;
@@ -13,7 +17,7 @@ type PluginOptions = {
 	/** Containers to animate in parallel */
 	containers: string[];
 	/** Number of previous containers to keep around after the animation */
-	keep: number | { [ container: string ]: number };
+	keep: number | { [container: string]: number };
 };
 
 type ContainerSet = {
@@ -57,6 +61,10 @@ export default class SwupParallelPlugin extends Plugin {
 			this.options.containers = this.swup.options.containers;
 		}
 
+		// Create new hooks
+		this.swup.hooks.create('content:insert');
+		this.swup.hooks.create('content:remove');
+
 		// On visit: check for containers and mark as parallel visit
 		// Run after user hooks to allow disabling parallel animations beforehand
 		this.on('visit:start', this.startVisit, { priority: 1 });
@@ -98,25 +106,28 @@ export default class SwupParallelPlugin extends Plugin {
 			return;
 		}
 
-		// Get info about parallel containers
-		this.parallelContainers = this.getParallelContainersForVisit(visit, page);
+		// Get info about parallel containers and save for later cleanup
+		const containers = this.getParallelContainersForVisit(visit, page);
+		this.parallelContainers = containers;
 
 		// Replace parallel containers ourselves
-		for (const { all, next, previous, keep, remove } of this.parallelContainers) {
-			all.forEach((el, i) => el.style.setProperty('--swup-parallel-container', `${i}`));
-			previous.setAttribute('aria-hidden', 'true');
-			previous.before(next);
+		this.swup.hooks.call('content:insert', { containers }, () => {
+			for (const { all, next, previous, keep, remove } of containers) {
+				all.forEach((el, i) => el.style.setProperty('--swup-parallel-container', `${i}`));
+				previous.setAttribute('aria-hidden', 'true');
+				previous.before(next);
 
-			if (visit.animation.animate) {
-				next.classList.add('is-next-container');
-				forceReflow(next);
-				next.classList.remove('is-next-container');
+				if (visit.animation.animate) {
+					next.classList.add('is-next-container');
+					forceReflow(next);
+					next.classList.remove('is-next-container');
+				}
+
+				previous.classList.add('is-previous-container');
+				keep.forEach((el) => el.classList.add('is-kept-container'));
+				remove.forEach((el) => el.classList.add('is-removing-container'));
 			}
-
-			previous.classList.add('is-previous-container');
-			keep.forEach((el) => el.classList.add('is-kept-container'));
-			remove.forEach((el) => el.classList.add('is-removing-container'));
-		}
+		});
 
 		// Modify visit containers so swup will only replace non-parallel containers
 		this.originalContainers = visit.containers;
@@ -133,10 +144,13 @@ export default class SwupParallelPlugin extends Plugin {
 
 	/** After each visit: remove previous containers */
 	protected cleanupContainers = () => {
-		for (const { remove, next } of this.parallelContainers) {
-			remove.forEach((el) => el.remove());
-			next.classList.remove('is-next-container');
-		}
+		const containers = this.parallelContainers;
+		this.swup.hooks.call('content:remove', { containers }, () => {
+			for (const { remove, next } of containers) {
+				remove.forEach((el) => el.remove());
+				next.classList.remove('is-next-container');
+			}
+		});
 		this.parallelContainers = [];
 	};
 
@@ -188,10 +202,7 @@ export default class SwupParallelPlugin extends Plugin {
 	protected visitHasPotentialParallelAnimation(visit: Visit) {
 		// Checking for visit.animation.parallel !== false here allows explicitly
 		// disabling parallel animations in user hooks before this plugin executes
-		return (
-			visit.animation.parallel !== false &&
-			this.visitHasParallelContainers(visit)
-		);
+		return visit.animation.parallel !== false && this.visitHasParallelContainers(visit);
 	}
 
 	/** Check if any of a visit's containers are animated in parallel */
