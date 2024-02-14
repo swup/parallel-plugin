@@ -38,7 +38,7 @@ type ContainerSet = {
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
-	requires = { swup: '>=4.3.3' };
+	requires = { swup: '>=4.6' };
 
 	defaults: PluginOptions = {
 		containers: [],
