@@ -38,7 +38,7 @@ type ContainerSet = {
 export default class SwupParallelPlugin extends Plugin {
 	name = 'SwupParallelPlugin';
 
-	requires = { swup: '>=4.3.3' };
+	requires = { swup: '>=4.6' };
 
 	defaults: PluginOptions = {
 		containers: [],
@@ -101,13 +101,13 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 
 	/** Before content replacement: insert new containers */
-	protected insertContainers: Handler<'content:replace'> = (visit, { page }) => {
+	protected insertContainers: Handler<'content:replace'> = (visit) => {
 		if (!this.isParallelVisit(visit)) {
 			return;
 		}
 
 		// Get info about parallel containers and save for later cleanup
-		const containers = this.getParallelContainersForVisit(visit, page);
+		const containers = this.getParallelContainersForVisit(visit);
 		this.parallelContainers = containers;
 
 		// Replace parallel containers ourselves
@@ -155,7 +155,7 @@ export default class SwupParallelPlugin extends Plugin {
 	};
 
 	/** Get all container sets for this visit from the current page and the incoming html */
-	protected getParallelContainersForVisit(visit: Visit, { html }: PageData): ContainerSet[] {
+	protected getParallelContainersForVisit(visit: Visit): ContainerSet[] {
 		const { containers: parallelContainers } = this.options;
 
 		const containersInVisit = parallelContainers.filter((s) => visit.containers.includes(s));
@@ -164,14 +164,12 @@ export default class SwupParallelPlugin extends Plugin {
 			return [];
 		}
 
-		const incomingDocument = new DOMParser().parseFromString(html, 'text/html');
-
 		return containersInVisit.reduce((containers, selector: string) => {
 			let { keep: keepCount } = this.options;
 			keepCount = typeof keepCount === 'object' ? keepCount[selector] : keepCount;
 			keepCount = Math.max(0, Number(keepCount));
 
-			const next = incomingDocument.querySelector<HTMLElement>(selector);
+			const next = visit.to.document!.querySelector<HTMLElement>(selector);
 			const previousAll = Array.from(document.querySelectorAll<HTMLElement>(selector));
 
 			const previous = previousAll[0];
